@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>随机战斗游戏</title>
+	<style type="text/css">
+		canvas{
+			border:1px solid #000000;
+			display: block;
+			margin: 0 auto;
+			float:left;
+		}
+		.content{
+			position: absolute;
+			top:200px;
+			margin: auto;
+		    width:1800px;
+		    left: 80px;
+		    right: 0;
+		    bottom: 0;
+		}
+
+		.kill{
+			text-align: center; /*让div内部文字居中*/
+		    background-color: rgba(135, 136, 142, 0.5);
+		    width: 450px;
+		    height: 500px;
+		    float:left;
+		}
+
+		.kill p{
+			background: #5f8cc3;
+			margin-top:0;
+			height:100px;
+			line-height: 100px;
+		}
+
+		.kill_recording{
+			overflow-y:auto; 
+			list-style:none;
+			text-align: center;
+			height:360px;
+		}
+
+		.result{
+			text-align: center; /*让div内部文字居中*/
+		    background-color: rgb(197, 198, 204,0.5);
+		    /*border-radius: 20px;*/
+		    width: 500px;
+		    height: 500px;
+		    float:left;
+		}
+
+		.result p{
+			background: #5f8cc3;
+			margin-top:0;
+			height:100px;
+			line-height: 100px;
+		}
+
+		.ranking{
+			list-style:none;
+			height:360px;
+			overflow-y: auto;
+
+		}
+	</style>
+</head>
+<body onload="init()">
+	<div class="content">
+		<canvas id="myCanvas">
+		</canvas>
+		<div class="kill">
+			<p>PK记录</p>
+			<div>
+				<ul class="kill_recording">
+				</ul>
+			</div>
+		</div>
+		<div class="result">
+			<p>击杀排行榜</p>
+			<div>
+				<ul class="ranking">
+				</ul>
+			</div>
+		</div>
+	</div>
+</form>
+</body>
+<script src="./public/js/jquery.js"></script>
+<script type="text/javascript" src="./public/layui/layui.js"></script>
+<script type="text/javascript" charset="UTF-8">
+/*初始化地图数据和随机战斗点数据*/
+function init(){
+	var url = './php/public/index.php';
+	 $.ajax({
+        url : url,
+        type : "GET",
+        async : true,//同步请求用false，异步请求true
+        dataType : "html",
+        data : {}, 
+        success : function(data) {
+        	all_data = data;
+        	var json = JSON.parse(data);//创建json对象
+        	console.log(json);
+        	map = json['map'];
+        	random_battle = json['random_battle'];
+        	var c=document.getElementById("myCanvas");
+        	c.width = map['width'];
+        	c.height = map['height'];
+        	if(json['num'] <= 1){
+	        	$('.ranking').empty();
+	        	$('.ranking').append(str);
+        		var ranking = json['ranking'];//按照击杀排行由大到小来排序数组
+        		var str = '';
+        		for(var i=0; i< ranking.length; i++){
+        			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + ranking[i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +ranking[i].kill_num +'</li>';
+        		}
+        		$('.ranking').append(str);
+        		$('#input').hide(); 
+        	}
+        	drawing(map,random_battle);
+        },
+        error : function(data, textstatus) {
+           //请求不成功返回的提示
+           alert('请求出错：状态码为：'+textstatus+'\n'+'错误说明：'+data);
+        }
+    });
+
+	
+}
+//定义颜色数组
+//构建websocket服务
+var socket = new WebSocket("ws://127.0.0.1:9502");
+socket.onopen = function(event){
+};
+socket.onclose = function(evt){
+	
+};
+socket.onerror = function(event){
+	console.log("error:"+event.data);
+}; 
+socket.onmessage = function (evt) {
+	var data = JSON.parse(evt.data);
+	if(data['msg']){
+		layui.use('layer',function () { 
+	 		layer.msg(data['msg']);
+		});
+	}
+
+	if(data['map'] && data['random_battle']){
+		console.log(data);
+		var c=document.getElementById("myCanvas");
+    	c.width = data['map']['width'];
+    	c.height = data['map']['height'];
+		drawing(data['map'],data['random_battle']);
+	}
+
+	if(data['pk_result']){
+		layui.use('layer',function () { 
+	 		layer.msg(data['pk_result']);
+		});
+	}
+
+	if(data['pk_recording']){
+		$('.kill_recording').prepend('<li>'+data['pk_recording']+'</li>');
+	}
+
+	if(data['ranking']){
+		var str = '';
+		for(var i=0; i< ranking.length; i++){
+			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + ranking[i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +ranking[i].kill_num +'</li>';
+		}
+		$('.ranking').empty();
+		$('.ranking').append(str);
+	}
+};
+//发送消息
+function sendMessage(){
+	var msg = document.getElementById("message").value; //获取消息
+	var tofd = $('.select').val();
+	var data = {'msg':msg,'tofd':tofd};
+	data = JSON.stringify(data);
+	if(data == ''){
+		alert('输入不能为空！');
+		return;
+	}
+	document.getElementById("message").value='';//清空数据
+	//发送消息
+	socket.send(data);
+}
+//发送昵称
+function sendName(){
+	var data = document.getElementById("name").value;
+	socket.send("#name#"+data);
+	var mainObj = document.getElementById("main");
+	mainObj.style.display = "block";
+	var setObj = document.getElementById("set");
+	setObj.style.display = "none";
+}
+
+/***
+*捕获键盘的上下左右按钮事件
+**/
+document.onkeyup = grabEvent;//是获取键盘按键的响应事件，
+function grabEvent(){
+
+	var keycode = event.which||event.keyCode;
+	switch(keycode){
+		case 37://左
+			socket.send(JSON.stringify({'deriction':37}));
+			break;
+		case 39://右
+			socket.send(JSON.stringify({'deriction':39}));
+			break;
+		case 38://上
+			socket.send(JSON.stringify({'deriction':38}));
+			break;
+		case 40://下
+			socket.send(JSON.stringify({'deriction':40}));
+			break;
+	}
+}
+
+/**
+ * 初始化地图，以及战斗随机点
+ */
+function drawing(map,random_battle){
+	for(var i = 0; i < random_battle.length; i++){
+		if(random_battle[i].is_death == 1) continue;
+		var c=document.getElementById("myCanvas");
+		var ctx=c.getContext("2d");//画笔
+
+		/*画网格*/
+		for(var j =0; j < map.width/map.point_length; j++){
+			ctx.beginPath();
+			ctx.moveTo(j*map.point_length, 0);
+			ctx.lineTo(j*map.point_length, 500);
+			ctx.moveTo(0,j*map.point_length);
+			ctx.lineTo(500,j*map.point_length);
+			ctx.closePath();
+			ctx.stroke();
+		}
+		ctx.fillStyle="#FF0000";
+		ctx.shadowColor = "black";
+		ctx.textAlign='center';
+		ctx.fillText(i,(random_battle[i].x - 0) + (map['point_length'] - 10),(random_battle[i].y - 0) + (map['point_length'] - 5));
+	}
+}
+
+var random_battle,map;
+var all_data;//记录后端返回的数据
+var rounds = 0;//记录回合数
+
+
+
+/*随机颜色*/
+function random_color(){
+	var color="#";
+	for(var i=0;i<6;i++){
+		color += (Math.random()*9 | 0).toString(16);
+	}
+	return color;
+}
+
+/*点击事件发送ajax请求*/
+function displayDate(){
+	rounds++;
+	console.log(all_data);
+	var url = './php/random_mode.php';
+		$.ajax({
+	        url : url,
+	        type : "POST",
+	        async : true,//同步请求用false，异步请求true
+	        dataType : "html",
+	        data : {'all_data':all_data}, 
+	        success : function(data) {
+	        	all_data = data;
+	        	var json = JSON.parse(data);//创建json对象
+	        	var map = json['map'];
+	        	var random_battle = json['random_battle'];
+	        	var kill_recording = json['kill_recording'];
+	        	var kill_recording_top = '<p>第'+ rounds +'回合</p>';
+	        	
+	        	$('.kill_recording').append(kill_recording_top);
+	        	var kill_recording_str = '';
+	        	if(kill_recording){
+	        		for(var j=0; j< kill_recording.length; j++){
+	    				kill_recording_str += '<li>'+ kill_recording[j] + '</li>'; 
+	    			}
+	    			$('.kill_recording').append(kill_recording_str);
+	        	}
+	        	console.log(json['num']);
+	        	if(json['num'] <= 1){
+	        		var ranking = json['ranking'];
+	        		var str = '';
+	        		for(var i=0; i< ranking.length; i++){
+	        			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + ranking[i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +ranking[i].kill_num +'</li>';
+	        		}
+	        		$('.ranking').empty();
+	        		$('.ranking').append(str);
+	        		$('#input').css('visibility','hidden'); 
+	        	}
+	        	console.log(json);
+	        	var c=document.getElementById("myCanvas");
+	        	c.width = map['width'];
+	        	c.height = map['height'];
+
+	        	//绘图
+	        	drawing(map,random_battle);
+	        },
+	        error : function(data, textstatus) {
+	           //请求不成功返回的提示
+	           alert('请求出错：状态码为：'+textstatus+'\n'+'错误说明：'+data);
+	        }
+    	});
+
+	// $t = true;
+	 
+}
+
+function empty(){
+	var url = './php/start_over.php';
+		$.ajax({
+	        url : url,
+	        type : "POST",
+	        async : true,//同步请求用false，异步请求true
+	        dataType : "html",
+	        data : {}, 
+	        success : function(data) {
+	        	console.log(data);
+	        	var json = JSON.parse(data);//创建json对象
+	        	if(json){
+	        		location = location;//刷新页面初始化
+	        	}else{
+	        		alert('清空数据库失败！');
+	        	}
+	        },
+	        error : function(data, textstatus) {
+	           //请求不成功返回的提示
+	           alert('请求出错：状态码为：'+textstatus+'\n'+'错误说明：'+data);
+	        }
+    	});
+
+}
+
+</script>
+</html>

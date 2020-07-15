@@ -1,0 +1,79 @@
+
+<?php 
+session_start();
+if($_SESSION['username']){
+	header('location:./index.php');
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+ 
+    <title>登录页</title>
+    <link rel="stylesheet" href="./public/layui/css/layui.css">
+    <link rel="stylesheet" href="./public/css/style.css">
+ 	<style type="text/css">
+ 		body{
+ 			background-image: url('./public/image/login.jpg')
+ 		}
+ 		.login-main{
+ 			margin-top:250px;
+ 			width:400px;
+ 			height:100px;
+ 			padding:50px;
+ 			background-color: #eaeaea;
+ 		}
+ 		.login-main header{
+ 			margin-top:0px;
+ 		}
+
+        .layui-btn,.layui-input-inline{
+            width:100%;
+        }
+ 	</style>
+</head>
+<body>
+ 
+<div class="login-main">
+    <header class="layui-elip">清空数据重新开始</header>
+    <div class="layui-form">
+        <div class="layui-input-inline login-btn">
+            <button lay-submit lay-filter="login" class="layui-btn" onclick="empty()">清空</button>
+        </div>
+        <hr/>
+    </div>
+</div>
+ 
+ 
+<script src="./public/layui/layui.js"></script>
+<script type="text/javascript" src="./public/js/jquery.js"></script>
+<script type="text/javascript">
+	function empty(){
+    var url = './php/start_over.php';
+        $.ajax({
+            url : url,
+            type : "POST",
+            async : true,//同步请求用false，异步请求true
+            dataType : "html",
+            data : {}, 
+            success : function(data) {
+                console.log(data);
+                var json = JSON.parse(data);//创建json对象
+                if(json){
+                    alert('清空数据库成功！');
+                }else{
+                    alert('清空数据库失败！');
+                }
+            },
+            error : function(data, textstatus) {
+               //请求不成功返回的提示
+               alert('请求出错：状态码为：'+textstatus+'\n'+'错误说明：'+data);
+            }
+        });
+
+    }
+</script>
+</body>
+</html>
+
