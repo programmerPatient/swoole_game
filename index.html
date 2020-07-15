@@ -192,8 +192,8 @@ socket.onmessage = function (evt) {
 
 	if(data['ranking']){
 		var str = '';
-		for(var i=0; i< ranking.length; i++){
-			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + ranking[i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +ranking[i].kill_num +'</li>';
+		for(var i=0; i< data['ranking'].length; i++){
+			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + data['ranking'][i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +data['ranking'][i].kill_num +'</li>';
 		}
 		$('.ranking').empty();
 		$('.ranking').append(str);
