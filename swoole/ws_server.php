@@ -173,7 +173,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
 
 
 //监听WebSocket连接关闭事件
-$ws->on('close', function ($ws, $fd) {
+$ws->on('close', function ($ws, $fd) use ($redis) {
     $select = explode(',',$redis->get_string('select'));
     $soldier_number = array_search($fd,$select);
     $select[$soldier_number] = -1;
