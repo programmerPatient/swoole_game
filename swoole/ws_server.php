@@ -79,6 +79,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
     $num = redis_soldier_num($redis);
     $res = null;
     if($num <= 1){
+        $ranking = null;
         for($i = 0; $i < count($random_battle); $i++){
             $position = calculation_ranking($random_battle,$random_battle[$i],$i);
             $redis->set_sort('ranking',$position,$random_battle[$i]['name']);
@@ -90,6 +91,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $ranking[] = $h;
         }
         $res['ranking'] = $ranking;
+        var_dump($ranking);
         $res['msg'] = '本次pk已经结束，欢迎下次光临！';
     }else{
         //获取当前用户控制的战士数据
