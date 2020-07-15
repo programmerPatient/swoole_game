@@ -90,87 +90,89 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $ranking[] = $h;
         }
         $res['ranking'] = $ranking;
-    }
-    //获取当前用户控制的战士数据
-    $da = $random_battle[$soldier_number];
-    $da = new Random_object($da['x'],$da['y'],$da['name'],$da['attack'],$da['defense'],$da['blood'],$da['is_death'],$da['kill_num']);
-    if($da->is_death == 1){
-        $ws->push($frame->fd,json_encode(['msg'=>'抱歉您已经被击杀了，请观战！']));
-    }else if($da->is_death == 0){
-
-        //pk对战
-        $enemy = pk_object($da,$redis,$map,$data->deriction);//对手对象
-        if($enemy !== false){
-            //获取pk战士的数据
-            $en = $random_battle[$enemy];
-            $en = new Random_object($en['x'],$en['y'],$en['name'],$en['attack'],$en['defense'],$en['blood'],$en['is_death'],$en['kill_num']);
-            $enemy_init_blood = $en->blood;
-            //pk操作
-            $result = $da->whether_kill($en,$map);
-            if($result){//如果对手被击杀
-                $description = $da->name.'击杀了'.$en->name;
-                $map->release_point($en->x/$map->point_length,$en->y/$map->point_length);
-                $en->update_is_death(1);
-                $en->update_blood(0);
-                $res['map'] = $map;
-                $random_battle[$enemy] = (array)$en;
-                $res['random_battle'] = $random_battle;
-                //通知被击杀用户
-                $tofd = $redis->get_hash('random_battle_'.$enemy.'编号战士','belongto_fd');
-                if(!empty($tofd))
-                    $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！']));
-            }else{
-                $description = $da->name.'对'.$en->name.'造成'.$da->attack.'点伤害';
-            }
-            $res['pk_recording'] = $description;
-            
-            redis_cache_soldier($redis,$en,'random_battle_'.$enemy.'编号战士');
-            $redis->set_list('battle_record',$description);
-            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
-        }
+    }else{
+        //获取当前用户控制的战士数据
+        $da = $random_battle[$soldier_number];
+        $da = new Random_object($da['x'],$da['y'],$da['name'],$da['attack'],$da['defense'],$da['blood'],$da['is_death'],$da['kill_num']);
         if($da->is_death == 1){
-            foreach ($ws->connections as $key => $fd) {
-                if($fd == $frame->fd){
-                    $ws->push($fd,json_encode(['msg'=>'您控制的编号为'.$soldier_number.'的战士被击杀']));
+            $ws->push($frame->fd,json_encode(['msg'=>'抱歉您已经被击杀了，请观战！']));
+        }else if($da->is_death == 0){
+
+            //pk对战
+            $enemy = pk_object($da,$redis,$map,$data->deriction);//对手对象
+            if($enemy !== false){
+                //获取pk战士的数据
+                $en = $random_battle[$enemy];
+                $en = new Random_object($en['x'],$en['y'],$en['name'],$en['attack'],$en['defense'],$en['blood'],$en['is_death'],$en['kill_num']);
+                $enemy_init_blood = $en->blood;
+                //pk操作
+                $result = $da->whether_kill($en,$map);
+                if($result){//如果对手被击杀
+                    $description = $da->name.'击杀了'.$en->name;
+                    $map->release_point($en->x/$map->point_length,$en->y/$map->point_length);
+                    $en->update_is_death(1);
+                    $en->update_blood(0);
+                    $res['map'] = $map;
+                    $random_battle[$enemy] = (array)$en;
+                    $res['random_battle'] = $random_battle;
+                    //通知被击杀用户
+                    $tofd = $redis->get_hash('random_battle_'.$enemy.'编号战士','belongto_fd');
+                    if(!empty($tofd))
+                        $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！']));
                 }else{
-                    $ws->push($fd,json_encode(['msg'=>'用户'.$frame->fd.'控制的编号为'.$soldier_number.'战士被击杀']));
-                } 
+                    $description = $da->name.'对'.$en->name.'造成'.$da->attack.'点伤害';
+                }
+                $res['pk_recording'] = $description;
+                
+                redis_cache_soldier($redis,$en,'random_battle_'.$enemy.'编号战士');
+                $redis->set_list('battle_record',$description);
+                redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
             }
-        }
+            if($da->is_death == 1){
+                foreach ($ws->connections as $key => $fd) {
+                    if($fd == $frame->fd){
+                        $ws->push($fd,json_encode(['msg'=>'您控制的编号为'.$soldier_number.'的战士被击杀']));
+                    }else{
+                        $ws->push($fd,json_encode(['msg'=>'用户'.$frame->fd.'控制的编号为'.$soldier_number.'战士被击杀']));
+                    } 
+                }
+            }
 
 
-        $p = null;
-        switch($data->deriction){
-            case 37://左
-                $p = move($da,$map,3);
-                break;
-            case 39://右
-                $p = move($da,$map,4);
-                break;
-            case 38://上
-                $p = move($da,$map,1);
-                break;
-            case 40://下
-                $p = move($da,$map,2);
-                break;
-        }
-        
-        if($p == 1){
-            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
-            $res['map'] = $map;
-            $random_battle[$soldier_number] = $da;
-            $res['random_battle'] = $random_battle;
-        }
+            $p = null;
+            switch($data->deriction){
+                case 37://左
+                    $p = move($da,$map,3);
+                    break;
+                case 39://右
+                    $p = move($da,$map,4);
+                    break;
+                case 38://上
+                    $p = move($da,$map,1);
+                    break;
+                case 40://下
+                    $p = move($da,$map,2);
+                    break;
+            }
+            
+            if($p == 1){
+                redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
+                $res['map'] = $map;
+                $random_battle[$soldier_number] = $da;
+                $res['random_battle'] = $random_battle;
+            }
 
-        
-        
+            
+            
 
-        redis_cache_map($redis,$map,'map');//缓存地图信息
+            redis_cache_map($redis,$map,'map');//缓存地图信息
 
-        foreach ($ws->connections as $key => $fd) {
-            $ws->push($fd,json_encode($res));
-        }
+            foreach ($ws->connections as $key => $fd) {
+                $ws->push($fd,json_encode($res));
+            }
+        }  
     }
+    
     
 });
 
