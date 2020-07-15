@@ -97,28 +97,6 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
     if($da->is_death == 1){
         $ws->push($frame->fd,json_encode(['msg'=>'抱歉您已经被击杀了，请观战！']));
     }else if($da->is_death == 0){
-        $p = null;
-        switch($data->deriction){
-            case 37://左
-                $p = move($da,$map,3);
-                break;
-            case 39://右
-                $p = move($da,$map,4);
-                break;
-            case 38://上
-                $p = move($da,$map,1);
-                break;
-            case 40://下
-                $p = move($da,$map,2);
-                break;
-        }
-        
-        if($p == 1){
-            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
-            $res['map'] = $map;
-            $random_battle[$soldier_number] = $da;
-            $res['random_battle'] = $random_battle;
-        }
 
         //pk对战
         $enemy = pk_object($da,$redis,$map,$data->deriction);//对手对象
@@ -159,6 +137,32 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                 } 
             }
         }
+
+
+        $p = null;
+        switch($data->deriction){
+            case 37://左
+                $p = move($da,$map,3);
+                break;
+            case 39://右
+                $p = move($da,$map,4);
+                break;
+            case 38://上
+                $p = move($da,$map,1);
+                break;
+            case 40://下
+                $p = move($da,$map,2);
+                break;
+        }
+        
+        if($p == 1){
+            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
+            $res['map'] = $map;
+            $random_battle[$soldier_number] = $da;
+            $res['random_battle'] = $random_battle;
+        }
+
+        
         
 
         redis_cache_map($redis,$map,'map');//缓存地图信息
