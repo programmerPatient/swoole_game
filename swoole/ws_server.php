@@ -53,7 +53,6 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
 	$data = json_decode($frame->data);
     $select = explode(',',$redis->get_string('select'));
     $soldier_number = array_search($frame->fd,$select);
-    var_dump($soldier_number);
     //获取地图数据
     $map['height'] = $redis->get_hash('map','height');
     $map['width'] = $redis->get_hash('map','width');

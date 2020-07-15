@@ -52,28 +52,28 @@ function pk_object($new_object,$redis,$map,$deriction){
 	$c = -1;
 	switch($deriction){
 		case 38:
-			if(($new_object->y - $map->point_length) >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y - $map->point_length)/$map->point_length]) != -1 ){
+			if($new_object->y >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][$new_object->y/$map->point_length]) != -1 ){
 				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
 				if($re ==0 )
 					return $c;
 			}
 			break;
 		case 40:
-			if(($new_object->y + $map->point_length) < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
+			if($new_object->y < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][$new_object->y/$map->point_length]) != -1){
 				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
 				if($re ==0 )
 					return $c;
 			}
 			break;
 		case 37:
-			if(($new_object->x - $map->point_length) >= 0 && ($c = $map->coordinate[($new_object->x - $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+			if($new_object->x >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][$new_object->y/$map->point_length]) != -1){
 				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
 				if($re ==0 )
 					return $c;
 			}
 			break;
 		case 39:
-			if(($new_object->x + $map->point_length) < $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+			if($new_object->x < $map->width && ($c = $map->coordinate[$new_object->x/$map->point_length][$new_object->y/$map->point_length]) != -1){
 				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
 				if($re ==0 )
 					return $c;
