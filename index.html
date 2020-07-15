@@ -129,6 +129,30 @@ function init(){
 
 	
 }
+
+function isEmpty(v) {
+    switch (typeof v) {
+    case 'undefined':
+        return true;
+    case 'string':
+        if (v.replace(/(^[ \t\n\r]*)|([ \t\n\r]*$)/g, '').length == 0) return true;
+        break;
+    case 'boolean':
+        if (!v) return true;
+        break;
+    case 'number':
+        if (0 === v || isNaN(v)) return true;
+        break;
+    case 'object':
+        if (null === v || v.length === 0) return true;
+        for (var i in v) {
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 //定义颜色数组
 //构建websocket服务
 var socket = new WebSocket("ws://maliweb.top:9503");
@@ -142,13 +166,13 @@ socket.onerror = function(event){
 }; 
 socket.onmessage = function (evt) {
 	var data = JSON.parse(evt.data);
-	if(data['msg'] != null){
+	if(data['msg']){
 		layui.use('layer',function () { 
 	 		layer.msg(data['msg']);
 		});
 	}
 
-	if(data['map'] != null && data['random_battle'] != null){
+	if(data['map']  && data['random_battle'] ){
 		console.log(data);
 		var c=document.getElementById("myCanvas");
     	c.width = data['map']['width'];
@@ -156,17 +180,17 @@ socket.onmessage = function (evt) {
 		drawing(data['map'],data['random_battle']);
 	}
 
-	if(data['pk_result'] != null){
+	if(data['pk_result']){
 		layui.use('layer',function () { 
 	 		layer.msg(data['pk_result']);
 		});
 	}
 
-	if(data['pk_recording'] != null){
+	if(data['pk_recording']){
 		$('.kill_recording').prepend('<li>'+data['pk_recording']+'</li>');
 	}
 
-	if(data['ranking'] != null){
+	if(data['ranking']){
 		var str = '';
 		for(var i=0; i< ranking.length; i++){
 			str += '<li>击杀排名：'+ (i+1) + '&nbsp;&nbsp;&nbsp;&nbsp;战士名：' + ranking[i].name + '&nbsp;&nbsp;&nbsp;&nbsp;击杀数：' +ranking[i].kill_num +'</li>';

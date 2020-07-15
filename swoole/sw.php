@@ -5,6 +5,7 @@ require './php/all_function.php';
 require '../php/model/random_object.php';
 require '../php/model/map.php';
 require '../php/array_transfer_string.php';
+session_start();
 /**
  * 建立redis链接
  */
@@ -31,29 +32,36 @@ $ws->on('open', function ($ws, $request) use ($redis) {
         $redis->set_string('select',implode(',',$selects));
     }
     $select = explode(',',$redis->get_string('select'));
-    /***随机分配未被控制的战士***/
-    do{
-        $number = rand(0,99);
-    }while($select[$number] != -1);
-    $select[$number] = $request->fd;
-    $redis->set_string('select',implode(',',$select));
-    foreach ($ws->connections as $key => $fd) {
-        if($fd == $request->fd){
-            $ws->push($fd,json_encode(['msg'=>'你控制的战士的编号为'.$number]));
-        }else{
-            $ws->push($fd,json_encode(['msg'=>'用户'.$request->fd.'进入房间，他将控制'.$number.'战士']));
-        } 
+    if(empty($_SESSION['soldier_number'])){
+        /***随机分配未被控制的战士***/
+        do{
+            $number = rand(0,99);
+        }while($select[$number] != -1);
+        var_dump($number);
+        $select[$number] = 1;
+        $redis->set_string('select',implode(',',$select));
+        $_SESSION['soldier_number'] = $number;//记录战士编号
+        foreach ($ws->connections as $key => $fd) {
+            if($fd == $request->fd){
+                $ws->push($fd,json_encode(['msg'=>'你控制的战士的编号为'.$number]));
+            }else{
+                $ws->push($fd,json_encode(['msg'=>'用户'.$request->fd.'进入房间，他将控制'.$number.'战士']));
+            } 
+        }
+    }else{
+        $number = $_SESSION['soldier_number'];
+        var_dump('二次请求'.$number);
+        $ws->push($request->fd,json_encode(['msg'=>'你的战士编号为'.$number]));
     }
-    $redis->set_hash('random_battle_'.$num.'编号战士','belongto_fd',$request->fd);
+    $redis->set_hash('random_battle_'.$_SESSION['soldier_number'].'编号战士','belongto_fd',$request->fd);
+    $_SESSION['fd'] = $request->fd;//记录连接的fd
     
 });
 
 //监听WebSocket消息事件
 $ws->on('message', function ($ws, $frame) use ($redis) {
 	$data = json_decode($frame->data);
-    $select = explode(',',$redis->get_string('select'));
-    $soldier_number = array_search($frame->fd,$select);
-    var_dump($soldier_number);
+
     //获取地图数据
     $map['height'] = $redis->get_hash('map','height');
     $map['width'] = $redis->get_hash('map','width');
@@ -93,7 +101,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
         $res['ranking'] = $ranking;
     }
     //获取当前用户控制的战士数据
-    $da = $random_battle[$soldier_number];
+    $da = $random_battle[$_SESSION['soldier_number']];
     $da = new Random_object($da['x'],$da['y'],$da['name'],$da['attack'],$da['defense'],$da['blood'],$da['is_death'],$da['kill_num']);
     if($da->is_death == 1){
         $ws->push($frame->fd,json_encode(['msg'=>'抱歉您已经被击杀了，请观战！']));
@@ -115,9 +123,9 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
         }
         
         if($p == 1){
-            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
+            redis_cache_soldier($redis,$da,'random_battle_'.$_SESSION['soldier_number'].'编号战士');
             $res['map'] = $map;
-            $random_battle[$soldier_number] = $da;
+            $random_battle[$_SESSION['soldier_number']] = $da;
             $res['random_battle'] = $random_battle;
         }
 
@@ -149,14 +157,14 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             
             redis_cache_soldier($redis,$en,'random_battle_'.$enemy.'编号战士');
             $redis->set_list('battle_record',$description);
-            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
+            redis_cache_soldier($redis,$da,'random_battle_'.$_SESSION['soldier_number'].'编号战士');
         }
         if($da->is_death == 1){
             foreach ($ws->connections as $key => $fd) {
                 if($fd == $frame->fd){
-                    $ws->push($fd,json_encode(['msg'=>'您控制的编号为'.$soldier_number.'的战士被击杀']));
+                    $ws->push($fd,json_encode(['msg'=>'您控制的编号为'.$_SESSION['soldier_number'].'的战士被击杀']));
                 }else{
-                    $ws->push($fd,json_encode(['msg'=>'用户'.$frame->fd.'控制的编号为'.$soldier_number.'战士被击杀']));
+                    $ws->push($fd,json_encode(['msg'=>'用户'.$frame->fd.'控制的编号为'.$_SESSION['soldier_number'].'战士被击杀']));
                 } 
             }
         }
@@ -174,11 +182,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
 
 //监听WebSocket连接关闭事件
 $ws->on('close', function ($ws, $fd) {
-    $select = explode(',',$redis->get_string('select'));
-    $soldier_number = array_search($fd,$select);
-    $select[$soldier_number] = -1;
-    $redis->set_string('select',implode(',',$select));
-    foreach ($ws->connections as $key => $fds) {
+   foreach ($ws->connections as $key => $fds) {
         $ws->push($fds,json_encode(['msg'=>'用户'.$fd.'退出战局']));
     }
 });
