@@ -12,7 +12,7 @@ session_start();
 $redis = RedisCache::getInstance(REDIS_HOST,REDIS_PORT);
 /** * websocket服务器端程序 * *///
 //创建websocket服务器对象，监听0.0.0.0:9502端口
-$ws = new Swoole\WebSocket\Server("0.0.0.0", 9502);
+$ws = new Swoole\WebSocket\Server("0.0.0.0", 9503);
 
 $ws->set(array(
     'max_conn'   => 100,
