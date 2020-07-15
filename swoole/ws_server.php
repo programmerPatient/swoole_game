@@ -44,7 +44,7 @@ $ws->on('open', function ($ws, $request) use ($redis) {
             $ws->push($fd,json_encode(['msg'=>'用户'.$request->fd.'进入房间，他将控制'.$number.'战士']));
         } 
     }
-    $redis->set_hash('random_battle_'.$num.'编号战士','belongto_fd',$request->fd);
+    $redis->set_hash('random_battle_'.$number.'编号战士','belongto_fd',$request->fd);
     
 });
 
