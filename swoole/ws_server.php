@@ -167,10 +167,12 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
 
             redis_cache_map($redis,$map,'map');//缓存地图信息
 
-            foreach ($ws->connections as $key => $fd) {
-                $ws->push($fd,json_encode($res));
-            }
+           
         }  
+    }
+    
+    foreach ($ws->connections as $key => $fd) {
+        $ws->push($fd,json_encode($res));
     }
     
     
