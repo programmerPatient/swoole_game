@@ -90,6 +90,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $ranking[] = $h;
         }
         $res['ranking'] = $ranking;
+        $res['msg'] = '本次pk已经结束，欢迎下次光临！';
     }else{
         //获取当前用户控制的战士数据
         $da = $random_battle[$soldier_number];
@@ -170,7 +171,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
            
         }  
     }
-    
+
     foreach ($ws->connections as $key => $fd) {
         $ws->push($fd,json_encode($res));
     }
