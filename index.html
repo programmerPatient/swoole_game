@@ -12,10 +12,10 @@
 		}
 		.content{
 			position: absolute;
-			top:200px;
+			top:100px;
 			margin: auto;
 		    width:1800px;
-		    left: 80px;
+		    left: 240px;
 		    right: 0;
 		    bottom: 0;
 		}
@@ -64,10 +64,50 @@
 			overflow-y: auto;
 
 		}
+		.top{
+			width:1451px;
+			height:200px;
+			text-align: center; /*让div内部文字居中*/
+		    background-color: rgb(197, 198, 204,0.5);
+		}
+		.top p{
+			height:50px;
+			line-height: 50px;
+			margin:0;
+			font-size:30px;
+			color:#3b7fd4;
+		}
+		.top ul{
+			margin: 0;
+		}
+		.top li{
+			float:left;
+			list-style-type:none;
+			width:300px;
+			height:60px;
+			line-height: 60px;
+			background-color:rgb(29,103,187,0.5);
+			margin-left:35px;
+			margin-top:10px;
+			color:rgb(255,255,255);
+		}
 	</style>
 </head>
 <body onload="init()">
 	<div class="content">
+		<div class="top">
+			<p>个人数据</p>
+			<ul>
+				<li class="x"></li>
+				<li class="y"></li>
+				<li class="name"></li>
+				<li class="attack"></li>
+				<li class="blood"></li>
+				<li class="defense"></li>
+				<li class="is_death"></li>
+				<li class="kill_num"></li>
+			</ul>
+		</div>
 		<canvas id="myCanvas">
 		</canvas>
 		<div class="kill">
@@ -102,7 +142,6 @@ function init(){
         success : function(data) {
         	all_data = data;
         	var json = JSON.parse(data);//创建json对象
-        	console.log(json);
         	map = json['map'];
         	random_battle = json['random_battle'];
         	var c=document.getElementById("myCanvas");
@@ -166,6 +205,7 @@ socket.onerror = function(event){
 }; 
 socket.onmessage = function (evt) {
 	var data = JSON.parse(evt.data);
+	console.log(data);
 	if(data['msg']){
 		layui.use('layer',function () { 
 	 		layer.msg(data['msg']);
@@ -173,11 +213,26 @@ socket.onmessage = function (evt) {
 	}
 
 	if(data['map']  && data['random_battle'] ){
-		console.log(data);
 		var c=document.getElementById("myCanvas");
     	c.width = data['map']['width'];
     	c.height = data['map']['height'];
 		drawing(data['map'],data['random_battle']);
+	}
+	if(data['myself_info']){
+		//替换文本
+		$('.x').text('x轴坐标：'+data['myself_info']['x']);
+		$('.y').text('y轴坐标：'+data['myself_info']['y']);
+		$('.name').text('战士名称：'+data['myself_info']['name']);
+		$('.attack').text('攻击力：'+data['myself_info']['attack']);
+		$('.defense').text('防御力：'+data['myself_info']['defense']);
+		$('.blood').text('血量：'+data['myself_info']['blood']);
+		if(data['myself_info']['is_death'] == 0){
+			$('.is_death').text('是否死亡：否');
+		}else if(data['myself_info']['is_death'] == 1){
+			$('.is_death').text('是否死亡：是');
+		}
+		
+		$('.kill_num').text('击杀数：'+data['myself_info']['kill_num']);
 	}
 
 	if(data['pk_result']){

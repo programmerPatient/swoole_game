@@ -37,9 +37,17 @@ $ws->on('open', function ($ws, $request) use ($redis) {
     }while($select[$number] != -1);
     $select[$number] = $request->fd;
     $redis->set_string('select',implode(',',$select));
+    $das['x'] = $redis->get_hash('random_battle_'.$number.'编号战士','x');
+    $das['y'] = $redis->get_hash('random_battle_'.$number.'编号战士','y');
+    $das['blood'] = $redis->get_hash('random_battle_'.$number.'编号战士','blood');
+    $das['attack'] = $redis->get_hash('random_battle_'.$number.'编号战士','attack');
+    $das['name'] = $redis->get_hash('random_battle_'.$number.'编号战士','name');
+    $das['defense'] = $redis->get_hash('random_battle_'.$number.'编号战士','defense');
+    $das['is_death'] = $redis->get_hash('random_battle_'.$number.'编号战士','is_death');
+    $das['kill_num'] = $redis->get_hash('random_battle_'.$number.'编号战士','kill_num');
     foreach ($ws->connections as $key => $fd) {
         if($fd == $request->fd){
-            $ws->push($fd,json_encode(['msg'=>'你控制的战士的编号为'.$number]));
+            $ws->push($fd,json_encode(['msg'=>'你控制的战士的编号为'.$number,'myself_info'=>$das]));
         }else{
             $ws->push($fd,json_encode(['msg'=>'用户'.$request->fd.'进入房间，他将控制'.$number.'战士']));
         } 
@@ -91,7 +99,6 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $ranking[] = $h;
         }
         $res['ranking'] = $ranking;
-        var_dump($ranking);
         $res['msg'] = '本次pk已经结束，欢迎下次光临！';
     }else{
         //获取当前用户控制的战士数据
@@ -121,9 +128,12 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                     //通知被击杀用户
                     $tofd = $redis->get_hash('random_battle_'.$enemy.'编号战士','belongto_fd');
                     if(!empty($tofd))
-                        $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！']));
+                        $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！','myself_info'=>$en]));
+
                 }else{
-                    $description = $da->name.'对'.$en->name.'造成'.$da->attack.'点伤害';
+                    $tofd = $redis->get_hash('random_battle_'.$enemy.'编号战士','belongto_fd');
+                    $description = $da->name.'对'.$en->name.'实际造成了'.($da->attack-$en->defense).'点伤害';
+                    $ws->push($tofd,json_encode(['msg'=>$da->name.'对您造成的实际伤害为'.($da->attack-$en->defense),'myself_info'=>$en]));
                 }
                 $res['pk_recording'] = $description;
                 
@@ -157,8 +167,9 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                     $p = move($da,$map,2);
                     break;
             }
-            
+            //移动后的操作
             if($p == 1){
+                /*缓存或修改战士数据*/
                 redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
                 $res['map'] = $map;
                 $random_battle[$soldier_number] = $da;
@@ -175,10 +186,14 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
     }
 
     foreach ($ws->connections as $key => $fd) {
+        if($fd == $frame->fd){
+            $res['myself_info'] = $random_battle[$soldier_number];
+        }else{
+            $res['myself_info'] = null;
+        }
+        var_dump($res['myself_info']);
         $ws->push($fd,json_encode($res));
-    }
-    
-    
+    }    
 });
 
 

@@ -66,7 +66,7 @@ class Random_object {
 			$b->blood = $b->blood - $h;
 		}
 
-		if($b->blood < 0) {//b被击杀
+		if($b->blood <= 0) {//b被击杀
 			$this->blood += $initial_blood;
 			$this->blood = $this->blood > self::MAX_BLOOD? self::MAX_BLOOD:$this->blood;
 			$this->kill_num++;
