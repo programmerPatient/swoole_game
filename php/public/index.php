@@ -21,28 +21,35 @@ $map = null;
 
 if($num > 0 && $mp > 0){
 
-	$battle = null;
-	for($i = 0; $i < 100; $i++){
-		$da['x'] = $redis->get_hash('random_battle_'.$i.'编号战士','x');
-		$da['y'] = $redis->get_hash('random_battle_'.$i.'编号战士','y');
-		$da['blood'] = $redis->get_hash('random_battle_'.$i.'编号战士','blood');
-		$da['attack'] = $redis->get_hash('random_battle_'.$i.'编号战士','attack');
-		$da['name'] = $redis->get_hash('random_battle_'.$i.'编号战士','name');
-		$da['defense'] = $redis->get_hash('random_battle_'.$i.'编号战士','defense');
-		$da['is_death'] = $redis->get_hash('random_battle_'.$i.'编号战士','is_death');
-		$da['kill_num'] = $redis->get_hash('random_battle_'.$i.'编号战士','kill_num');
-		$battle[] = $da;
-	}
+	// $battle = null;
+	// for($i = 0; $i < 100; $i++){
+	// 	$da['x'] = $redis->get_hash('random_battle_'.$i.'编号战士','x');
+	// 	$da['y'] = $redis->get_hash('random_battle_'.$i.'编号战士','y');
+	// 	$da['blood'] = $redis->get_hash('random_battle_'.$i.'编号战士','blood');
+	// 	$da['attack'] = $redis->get_hash('random_battle_'.$i.'编号战士','attack');
+	// 	$da['name'] = $redis->get_hash('random_battle_'.$i.'编号战士','name');
+	// 	$da['defense'] = $redis->get_hash('random_battle_'.$i.'编号战士','defense');
+	// 	$da['is_death'] = $redis->get_hash('random_battle_'.$i.'编号战士','is_death');
+	// 	$da['kill_num'] = $redis->get_hash('random_battle_'.$i.'编号战士','kill_num');
+	// 	$battle[] = $da;
+	// }
 
-	$map['width'] = $redis->get_hash('map','width');
-	$map['height'] = $redis->get_hash('map','height');
-	$map['point_length'] = $redis->get_hash('map','point_length');
-	$map['coordinate'] = emplodex(',',$redis->get_hash('map','coordinate'),'|');
+	// $map['width'] = $redis->get_hash('map','width');
+	// $map['height'] = $redis->get_hash('map','height');
+	// $map['point_length'] = $redis->get_hash('map','point_length');
+	// $map['coordinate'] = emplodex(',',$redis->get_hash('map','coordinate'),'|');
 
-	$map = instance_map($map);
-	$random_battle = instance_soldier($battle,$map);
+	// $map = instance_map($map);
+	// $random_battle = instance_soldier($battle,$map);
 
 }else{
+    //记录战士是否被控制
+    $selects = null;
+    for($i = 0; $i < 100; $i++){
+        $selects[] = -1;
+    }
+
+    $redis->set_string('select',implode(',',$selects));
 	$num = 100;
 	$data = init_data($redis);
 	$map = $data['map'];
@@ -59,8 +66,8 @@ if($num <= 1){
 	}
 }
 
-$data['random_battle'] = $random_battle;
-$data['map'] = $map;
+// $data['random_battle'] = (array)$random_battle;
+// $data['map'] = $map;
 $data['num'] = $num;
 $data['ranking'] = $ranking;
 
