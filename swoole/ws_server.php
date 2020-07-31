@@ -49,7 +49,7 @@ $ws->on('open', function ($ws, $request) use ($redis) {
     /***随机分配未被控制的战士***/
     do{
         $number = rand(0,99);
-    }while($select[$number] != -1);
+    }while($select[$number] != -1 || $random_battle[$number]['is_death'] == 1);
     $select[$number] = $request->fd;
     $redis->set_string('select',implode(',',$select));
     // var_dump(explode(',',$redis->get_string('select')));
