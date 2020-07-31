@@ -284,7 +284,6 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                         // var_dump($enemys);
                         //不存在敌人则移动
                         if($enemys == false){
-                            var_dump('ssss');
                             random_move($new_object,$map,$random_battle,$j);
 
                             $random_battle[$j] = (array)$new_object;
