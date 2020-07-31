@@ -159,6 +159,7 @@ function init(){
         success : function(datass) {
         	all_data = datass;
         	var json = JSON.parse(datass);//创建json对象
+        	console.log(json);
         	if(json['num'] <= 1){
 	        	$('.ranking').empty();
 	        	$('.ranking').append(str);

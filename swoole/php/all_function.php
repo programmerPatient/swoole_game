@@ -51,39 +51,59 @@ function pk_object($new_object,$redis,$map,$deriction = -1){
 	
 	$c = -1;
 	if($deriction == -1){
-		$data =array(38,40,37,39);
-		$deriction = $data[rand(0,3)];
+		if(($new_object->y - $map->point_length) >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y - $map->point_length)/$map->point_length]) != -1 ){
+			$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+			if($re ==0 )
+				return $c;
+		}
+		if(($new_object->y + $map->point_length) < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
+			$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+			if($re ==0 )
+				return $c;
+		}
+		if(($new_object->x - $map->point_length) >= 0 && ($c = $map->coordinate[($new_object->x - $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+			$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+			if($re ==0 )
+				return $c;
+		}
+		if(($new_object->x + $map->point_length) < $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+			$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+			if($re ==0 )
+				return $c;
+		}
+	}else{
+		switch($deriction){
+			case 38:
+				if(($new_object->y - $map->point_length) >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y - $map->point_length)/$map->point_length]) != -1 ){
+					$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+					if($re ==0 )
+						return $c;
+				}
+				break;
+			case 40:
+				if(($new_object->y + $map->point_length) < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
+					$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+					if($re ==0 )
+						return $c;
+				}
+				break;
+			case 37:
+				if(($new_object->x - $map->point_length) >= 0 && ($c = $map->coordinate[($new_object->x - $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+					$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+					if($re ==0 )
+						return $c;
+				}
+				break;
+			case 39:
+				if(($new_object->x + $map->point_length) < $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+					$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
+					if($re ==0 )
+						return $c;
+				}
+				break;
+		}
 	}
-	switch($deriction){
-		case 38:
-			if(($new_object->y - $map->point_length) >= 0 && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y - $map->point_length)/$map->point_length]) != -1 ){
-				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
-				if($re ==0 )
-					return $c;
-			}
-			break;
-		case 40:
-			if(($new_object->y + $map->point_length) < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
-				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
-				if($re ==0 )
-					return $c;
-			}
-			break;
-		case 37:
-			if(($new_object->x - $map->point_length) >= 0 && ($c = $map->coordinate[($new_object->x - $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
-				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
-				if($re ==0 )
-					return $c;
-			}
-			break;
-		case 39:
-			if(($new_object->x + $map->point_length) < $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
-				$re = $redis->get_hash('random_battle_'.$c.'编号战士','is_death');
-				if($re ==0 )
-					return $c;
-			}
-			break;
-	}
+	
 	return false;
 
 }
@@ -154,7 +174,6 @@ function find_nearly_enemy($new_object,$all_object,$map,$k){
 		}
 	}
 
-
 	return $nearly_object;
 }
 
@@ -169,7 +188,7 @@ function random_pk_object($new_object,$all_object,$map){
 			return $c;
 	}
 
-	if(($new_object->y + $map->point_length) <= $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
+	if(($new_object->y + $map->point_length) < $map->height && ($c = $map->coordinate[$new_object->x/$map->point_length][($new_object->y + $map->point_length)/$map->point_length]) != -1){
 		if($all_object[$c]['is_death'] ==0 )
 			return $c;
 	}
@@ -179,7 +198,7 @@ function random_pk_object($new_object,$all_object,$map){
 			return $c;
 	}
 
-	if(($new_object->x + $map->point_length) <= $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
+	if(($new_object->x + $map->point_length) < $map->width && ($c = $map->coordinate[($new_object->x + $map->point_length)/$map->point_length][$new_object->y/$map->point_length]) != -1){
 		if($all_object[$c]['is_death'] ==0)
 			return $c;
 	}
@@ -192,7 +211,6 @@ function random_pk_object($new_object,$all_object,$map){
 function survive_num($all_object){
 	$num = 0;
 	for($h = 0;$h < count($all_object); $h++){
-		// var_dump($all_object[$h]);
 		if(((array)$all_object[$h])['is_death'] != 1) $num++;
 	}
 	return $num;
@@ -201,22 +219,45 @@ function survive_num($all_object){
 /*随机移动*/
 function random_move(&$new_object,&$map,$all_object,$k){
 	$num = survive_num($all_object);
-	$direction = 0;
 	$enemy = find_nearly_enemy($new_object,$all_object,$map,$k);//寻找最近距离的对手
-	$h = rand(0,1);
+
+
+	$h = -1;
+	$direction = rand(1,4);
+
+
 	if($enemy['x'] == $new_object->x) $h = 1;
-	if($enemy['y'] == $new_object->y) $h = 0;
-	//随机选择x还是y方向上的移动
-	switch ($h) {
-		case 0://x方向上的移动
-			if($enemy['x'] > ($new_object->x - $map->point_length)) $direction = 4;
-			else if($enemy['x'] < ($new_object->x + $map->point_length)) $direction = 3;
-			break;
-		
-		case 1://y方向上的移动
-			if($enemy['y'] > ($new_object->y - $map->point_length)) $direction = 2;
-			else if($enemy['y'] < ($new_object->y + $map->point_length)) $direction = 1;
-			break;
+	else if($enemy['y'] == $new_object->y) $h = 0;
+	if($h == -1){
+		$r = rand(0,1);
+		//随机选择x还是y方向上的移动
+		switch ($r) {
+			case 0://x方向上的移动
+				if($enemy['x'] > $new_object->x) $direction = 4;
+				else if($enemy['x'] < $new_object->x ) $direction = 3;
+				break;
+			
+			case 1://y方向上的移动
+				if($enemy['y'] > $new_object->y) $direction = 2;
+				else if($enemy['y'] < $new_object->y) $direction = 1;
+				break;
+		}
+	}else{
+		//随机选择x还是y方向上的移动
+		switch ($h) {
+			case 0://x方向上的移动
+				if($enemy['x'] > ($new_object->x + $map->point_length)) $direction = 4;
+				else if($enemy['x'] < ($new_object->x - $map->point_length)) $direction = 3;
+				else if($enemy['x'] = $new_object->x + $map->point_length || $enemy['x'] = $new_object->x - $map->point_length) return 0;
+				break;
+			
+			case 1://y方向上的移动
+				if($enemy['y'] > ($new_object->y + $map->point_length)) $direction = 2;
+				else if($enemy['y'] < ($new_object->y - $map->point_length)) $direction = 1;
+				else if($enemy['y'] = $new_object->y + $map->point_length || $enemy['y'] = $new_object->y - $map->point_length) return 0;
+				break;
+
+		}
 	}
 	$move_num = 0;//判断是否四个方向都尝试过移动
 	do{

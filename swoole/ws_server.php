@@ -44,7 +44,6 @@ $ws->on('open', function ($ws, $request) use ($redis) {
         $das['kill_num'] = $redis->get_hash('random_battle_'.$i.'编号战士','kill_num');
         $random_battle[] = $das;
     }
-
     $select = explode(',',$redis->get_string('select'));
     /***随机分配未被控制的战士***/
     do{
@@ -198,7 +197,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                         $new_object = new Random_object($random_battle[$j]['x'],$random_battle[$j]['y'],$random_battle[$j]['name'],$random_battle[$j]['attack'],$random_battle[$j]['defense'],$random_battle[$j]['blood'],$random_battle[$j]['is_death'],$random_battle[$j]['kill_num']);
                         //pk对战
                         $enemys = pk_object($new_object,$redis,$map);//对手对象
-            //             // var_dump($new_object);
+                        
                         if($enemys !== false){
 
                             //获取pk战士的数据
@@ -296,23 +295,27 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                             $new_object = new Random_object($random_battle[$j]['x'],$random_battle[$j]['y'],$random_battle[$j]['name'],$random_battle[$j]['attack'],$random_battle[$j]['defense'],$random_battle[$j]['blood'],$random_battle[$j]['is_death'],$random_battle[$j]['kill_num']);
                             //查看周围是否有敌人
                             $enemys = random_pk_object($new_object,$random_battle,$map);//对手对象
-                            // var_dump($enemys);
+
                             //不存在敌人则移动
                             if($enemys == false){
+
                                 random_move($new_object,$map,$random_battle,$j);
+
+
 
                                 $random_battle[$j] = (array)$new_object;
                             }
 
                         }
                         
-                        //移动后的操作
-                        /*缓存或修改战士数据*/
                         
-                        redis_cache_soldier($redis,(object)$random_battle[$j],'random_battle_'.$j.'编号战士');
                         
                     }
+                    //移动后的操作
+                    /*缓存或修改战士数据*/
                     
+                    redis_cache_soldier($redis,(object)$random_battle[$j],'random_battle_'.$j.'编号战士');
+                
                 }
             }
             

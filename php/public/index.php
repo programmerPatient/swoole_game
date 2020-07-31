@@ -66,8 +66,8 @@ if($num <= 1){
 	}
 }
 
-// $data['random_battle'] = (array)$random_battle;
-// $data['map'] = $map;
+$data['random_battle'] = (array)$random_battle;
+$data['map'] = $map;
 $data['num'] = $num;
 $data['ranking'] = $ranking;
 
