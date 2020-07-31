@@ -242,63 +242,80 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             }
 
             $num = redis_soldier_num($redis);
-            /**
-             * 移动，未被控制的点随机移动
-             */
-            for($j = 0; $j < count($random_battle); $j++){
-                // var_dump($j == $soldier_number);
-                if($j == $soldier_number){
-                   $p = null;
-                    switch($data->deriction){
-                        case 37://左
-                            $p = move($da,$map,3);
-                            break;
-                        case 39://右
-                            $p = move($da,$map,4);
-                            break;
-                        case 38://上
-                            $p = move($da,$map,1);
-                            break;
-                        case 40://下
-                            $p = move($da,$map,2);
-                            break;
-                    }
-                    //移动后的操作
-                    if($p == 1){
-                        /*缓存或修改战士数据*/
-                        redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
-                        // $res['map'] = $map;
-                        $random_battle[$soldier_number] = (array)$da;
-                        // $res['random_battle'] = $random_battle;
-                    } 
-                }else if($select[$j] == -1){
-
-                    if($random_battle[$j]['is_death'] == 0){
-
-                        /**
-                         * pk
-                         */
-                        $new_object = new Random_object($random_battle[$j]['x'],$random_battle[$j]['y'],$random_battle[$j]['name'],$random_battle[$j]['attack'],$random_battle[$j]['defense'],$random_battle[$j]['blood'],$random_battle[$j]['is_death'],$random_battle[$j]['kill_num']);
-                        //查看周围是否有敌人
-                        $enemys = random_pk_object($new_object,$random_battle,$map);//对手对象
-                        // var_dump($enemys);
-                        //不存在敌人则移动
-                        if($enemys == false){
-                            random_move($new_object,$map,$random_battle,$j);
-
-                            $random_battle[$j] = (array)$new_object;
+            if($num <= 1){
+                $ranking = null;
+                for($i = 0; $i < count($random_battle); $i++){
+                    $position = calculation_ranking($random_battle,$random_battle[$i],$i);
+                    $redis->set_sort('ranking',$position,$random_battle[$i]['name']);
+                }
+                $daa = $redis->get_all_data('ranking');
+                for($i = 0; $i < count((array)$daa); $i++){
+                    $h['name'] = $daa[$i];
+                    $h['kill_num'] = $redis->get_hash('random_battle_'.$daa[$i],'kill_num');
+                    $ranking[] = $h;
+                }
+                $res['ranking'] = $ranking;
+                $res['msg'] = '本次pk已经结束，欢迎下次光临！';
+            }else{
+                /**
+                 * 移动，未被控制的点随机移动
+                 */
+                for($j = 0; $j < count($random_battle); $j++){
+                    // var_dump($j == $soldier_number);
+                    if($j == $soldier_number){
+                       $p = null;
+                        switch($data->deriction){
+                            case 37://左
+                                $p = move($da,$map,3);
+                                break;
+                            case 39://右
+                                $p = move($da,$map,4);
+                                break;
+                            case 38://上
+                                $p = move($da,$map,1);
+                                break;
+                            case 40://下
+                                $p = move($da,$map,2);
+                                break;
                         }
+                        //移动后的操作
+                        if($p == 1){
+                            /*缓存或修改战士数据*/
+                            redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
+                            // $res['map'] = $map;
+                            $random_battle[$soldier_number] = (array)$da;
+                            // $res['random_battle'] = $random_battle;
+                        } 
+                    }else if($select[$j] == -1){
 
+                        if($random_battle[$j]['is_death'] == 0){
+
+                            /**
+                             * pk
+                             */
+                            $new_object = new Random_object($random_battle[$j]['x'],$random_battle[$j]['y'],$random_battle[$j]['name'],$random_battle[$j]['attack'],$random_battle[$j]['defense'],$random_battle[$j]['blood'],$random_battle[$j]['is_death'],$random_battle[$j]['kill_num']);
+                            //查看周围是否有敌人
+                            $enemys = random_pk_object($new_object,$random_battle,$map);//对手对象
+                            // var_dump($enemys);
+                            //不存在敌人则移动
+                            if($enemys == false){
+                                random_move($new_object,$map,$random_battle,$j);
+
+                                $random_battle[$j] = (array)$new_object;
+                            }
+
+                        }
+                        
+                        //移动后的操作
+                        /*缓存或修改战士数据*/
+                        
+                        redis_cache_soldier($redis,(object)$random_battle[$j],'random_battle_'.$j.'编号战士');
+                        
                     }
-                    
-                    //移动后的操作
-                    /*缓存或修改战士数据*/
-                    
-                    redis_cache_soldier($redis,(object)$random_battle[$j],'random_battle_'.$j.'编号战士');
                     
                 }
-                
             }
+            
             
 
             redis_cache_map($redis,$map,'map');//缓存地图信息
