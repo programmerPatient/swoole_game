@@ -332,7 +332,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $res['id'] = $soldier_number;
         }else{
             $res['id'] = array_search($fd,$select);
-            $res['myself_info'] = null;
+            $res['myself_info'] = $random_battle[$res['id']];
         }
         $ws->push($fd,json_encode($res));
     }    
