@@ -148,7 +148,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                     //通知被击杀用户
                     $tofd = $redis->get_hash('random_battle_'.$enemy.'编号战士','belongto_fd');
                     if(!empty($tofd))
-                        $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！','myself_info'=>$en]));
+                        $ws->push($tofd,json_encode(['msg'=>'您被'.$da->name.'击杀了！']));
 
                 }else{
                     /**
@@ -167,7 +167,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                         // $res['map'] = $map;
                         $random_battle[$soldier_number] = (array)$da;
                         $random_battle[$enemy] = (array)$en;
-                        $ws->push($frame->fd,json_encode(['msg'=>'您被'.$en->name.'反杀了！','myself_info'=>$da]));
+                        $ws->push($frame->fd,json_encode(['msg'=>'您被'.$en->name.'反杀了！']));
                         // $res['random_battle'] = $random_battle;
 
                     }else{
@@ -189,11 +189,8 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                 $random_battle[$enemy] = (array)$en;
                 $rival_info = $en;
             }
-            // else{
-            //     $res['rival_info'] = null;
-            // }
             for($j=0; $j< count($random_battle);$j++){
-                if($select[$j] == -1 && $j != $soldier_number){
+                if($select[$j] == -1 && $j != $soldier_number && $j != $enemy){
 
                     if($random_battle[$j]['is_death'] == 0){
 
@@ -201,7 +198,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                         //pk对战
                         $enemys = pk_object($new_object,$redis,$map);//对手对象
                         
-                        if($enemys !== false){
+                        if($enemys !== false && $enemys != $soldier_number && $enemys != $enemy ){
 
                             //获取pk战士的数据
                              $ens = $random_battle[$enemys];
@@ -355,6 +352,7 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $res['rival_info'] = $rival_info;
             $res['myself_info'] = $random_battle[$soldier_number];
             $res['id'] = $soldier_number;
+            // var_dump($random_battle[$soldier_number]);
         }else{
             $res['id'] = array_search($fd,$select);
             $res['myself_info'] = $random_battle[$res['id']];

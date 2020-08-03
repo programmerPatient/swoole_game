@@ -243,9 +243,11 @@ function init(){
 				}
 
 				if(data['pk_recording']){
+					
 					for(var i=0;i < data['pk_recording'].length; i++){
 						$('.kill_recording').prepend('<li>'+data['pk_recording'][i]+'</li>');
 					}
+					$('.kill_recording').prepend('<li style="font-size:20px;color:red">一次回合数据</li>');
 					
 				}
 
