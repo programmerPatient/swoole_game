@@ -104,6 +104,8 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
 
     $num = redis_soldier_num($redis);
     $res = null;
+    $rival_info = null;//记录当前连接对象的对手
+    $res['rival_info'] = null;
     if($num <= 1){
         $ranking = null;
         for($i = 0; $i < count($random_battle); $i++){
@@ -185,13 +187,14 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                 redis_cache_soldier($redis,$da,'random_battle_'.$soldier_number.'编号战士');
                 $random_battle[$soldier_number] = (array)$da;
                 $random_battle[$enemy] = (array)$en;
-                $res['rival_info'] = $en;
-            }else{
-                $res['rival_info'] = null;
+                $rival_info = $en;
             }
+            // else{
+            //     $res['rival_info'] = null;
+            // }
             for($j=0; $j< count($random_battle);$j++){
                 if($select[$j] == -1 && $j != $soldier_number){
-                    
+
                     if($random_battle[$j]['is_death'] == 0){
 
                         $new_object = new Random_object($random_battle[$j]['x'],$random_battle[$j]['y'],$random_battle[$j]['name'],$random_battle[$j]['attack'],$random_battle[$j]['defense'],$random_battle[$j]['blood'],$random_battle[$j]['is_death'],$random_battle[$j]['kill_num']);
@@ -214,7 +217,18 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                                 $random_battle[$enemys] = (array)$ens;
                                 $random_battle[$j] = (array)$new_object;
                                 $res['pk_recording'][] = $description;
+
+                                $tofd = $redis->get_hash('random_battle_'.$enemys.'编号战士','belongto_fd');
+                                if(!empty($tofd)){
+                                    $ws->push($tofd,json_encode(['msg'=>'您被'.$new_object->name.'击杀了','myself_info'=>$ens,'rival_info'=>$new_object]));
+                                }
                              }else{
+                                $description = $new_object->name.'对'.$ens->name.'实际造成了'.(($new_object->attack-$ens->defense) > 0? ($new_object->attack-$ens->defense):0).'点伤害';
+                                $res['pk_recording'][] = $description;
+                                $tofd = $redis->get_hash('random_battle_'.$enemys.'编号战士','belongto_fd');
+                                if(!empty($tofd)){
+                                    $ws->push($tofd,json_encode(['myself_info'=>$ens,'rival_info'=>$new_object]));
+                                }
                                 //对手进行反击
                                 $counter_res = $ens->whether_kill($new_object);
                                 if($counter_res){
@@ -222,9 +236,17 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                                     $description = $new_object->name.'被'.$ens->name.'反杀';
                                     $map->release_point($new_object->x/$map->point_length,$new_object->y/$map->point_length);
                                     $new_object->update_is_death(1);
-                                    $new_object->update_blood(0);   
+                                    $new_object->update_blood(0);
+                                    $tofd = $redis->get_hash('random_battle_'.$j.'编号战士','belongto_fd');
+                                    if(!empty($tofd)){
+                                        $ws->push($tofd,json_encode(['msg'=>'您被'.$ens->name.'击杀了','myself_info'=>$new_object,'rival_info'=>$ens]));
+                                    }  
                                 }else{
                                     $description = $ens->name.'对'.$new_object->name.'实际造成了'.(($ens->attack-$new_object->defense) > 0? ($ens->attack-$new_object->defense):0).'点伤害';
+                                    $tofd = $redis->get_hash('random_battle_'.$j.'编号战士','belongto_fd');
+                                    if(!empty($tofd)){
+                                        $ws->push($tofd,json_encode(['myself_info'=>$new_object,'rival_info'=>$ens]));
+                                    } 
                                 }
                                 $random_battle[$j] = (array)$new_object;
                                 $random_battle[$enemys] = (array)$ens;
@@ -328,14 +350,15 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
     }
     $res['map'] = $map;
     $res['random_battle'] = $random_battle;
-
     foreach ($ws->connections as $key => $fd) {
         if($fd == $frame->fd){
+            $res['rival_info'] = $rival_info;
             $res['myself_info'] = $random_battle[$soldier_number];
             $res['id'] = $soldier_number;
         }else{
             $res['id'] = array_search($fd,$select);
             $res['myself_info'] = $random_battle[$res['id']];
+            $res['rival_info'] = null;
         }
         $ws->push($fd,json_encode($res));
     }    

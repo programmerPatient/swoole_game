@@ -23,7 +23,7 @@ function redis_cache_soldier($redis,$data, $key){
 function redis_soldier_num($redis){
 	// return $redis->get_hash('random_battle_0编号战士','name');
 	$num = 0;
-	for($i = 0; $i < 10; $i++){
+	for($i = 0; $i < 100; $i++){
 		if($redis->get_hash('random_battle_'.$i.'编号战士','name') && $redis->get_hash('random_battle_'.$i.'编号战士','is_death') == 0) $num++;
 	}
 	return $num;
@@ -54,7 +54,7 @@ function init_data($redis){
 	$map = new Map(500,500,20);
 	$random_battle = null;
 	$h = null;
-	for($i = 0; $i < 10; $i++){
+	for($i = 0; $i < 100; $i++){
 		do {
 
 			$x = rand(0,($map->width/$map->point_length)-1);
