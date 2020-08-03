@@ -190,6 +190,9 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
                 $rival_info = $en;
             }
             for($j=0; $j< count($random_battle);$j++){
+                if($enemy === false){
+                    $enemy = -1;
+                }
                 if($select[$j] == -1 && $j != $soldier_number && $j != $enemy){
 
                     if($random_battle[$j]['is_death'] == 0){
@@ -352,7 +355,6 @@ $ws->on('message', function ($ws, $frame) use ($redis) {
             $res['rival_info'] = $rival_info;
             $res['myself_info'] = $random_battle[$soldier_number];
             $res['id'] = $soldier_number;
-            // var_dump($random_battle[$soldier_number]);
         }else{
             $res['id'] = array_search($fd,$select);
             $res['myself_info'] = $random_battle[$res['id']];
